@@ -1,0 +1,13 @@
+/*.app/***
+/*.dylib
+/certutil
+/waterfox-bin
+/gtest/***
+#if defined(MOZ_ASAN) || defined(MOZ_TSAN)
+/llvm-symbolizer
+#endif
+/pk12util
+/ssltunnel
+/webrtc-gtest
+/xpcshell
+/XUL

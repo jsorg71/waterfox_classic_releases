@@ -1,0 +1,469 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- General panel -->
+
+<script type="application/javascript"
+        src="chrome://browser/content/preferences/in-content/main.js"/>
+
+<stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences.properties"/>
+
+<preferences id="mainPreferences" hidden="true" data-category="paneGeneral">
+
+#ifdef E10S_TESTING_ONLY
+    <preference id="browser.tabs.remote.autostart"
+                name="browser.tabs.remote.autostart"
+                type="bool"/>
+    <preference id="e10sTempPref"
+                name="browser.tabs.remote.autostart.2"
+                type="bool"/>
+    <preference id="e10sForceEnable"
+                name="browser.tabs.remote.force-enable"
+                type="bool"/>
+#endif
+
+    <!-- Startup -->
+    <preference id="browser.startup.page"
+                name="browser.startup.page"
+                type="int"/>
+    <preference id="browser.startup.homepage"
+                name="browser.startup.homepage"
+                type="wstring"/>
+
+#ifdef HAVE_SHELL_SERVICE
+    <preference id="browser.shell.checkDefaultBrowser"
+                name="browser.shell.checkDefaultBrowser"
+                type="bool"/>
+
+    <preference id="pref.general.disable_button.default_browser"
+                name="pref.general.disable_button.default_browser"
+                type="bool"/>
+#endif
+
+    <preference id="pref.browser.homepage.disable_button.current_page"
+                name="pref.browser.homepage.disable_button.current_page"
+                type="bool"/>
+    <preference id="pref.browser.homepage.disable_button.bookmark_page"
+                name="pref.browser.homepage.disable_button.bookmark_page"
+                type="bool"/>
+    <preference id="pref.browser.homepage.disable_button.restore_default"
+                name="pref.browser.homepage.disable_button.restore_default"
+                type="bool"/>
+
+    <preference id="browser.privatebrowsing.autostart"
+                name="browser.privatebrowsing.autostart"
+                type="bool"/>
+
+    <!-- Downloads -->
+    <preference id="browser.download.useDownloadDir"
+                name="browser.download.useDownloadDir"
+                type="bool"/>
+
+    <preference id="browser.download.folderList"
+                name="browser.download.folderList"
+                type="int"/>
+    <preference id="browser.download.dir"
+                name="browser.download.dir"
+                type="file"/>
+    <!-- Tab preferences
+    Preferences:
+
+    browser.link.open_newwindow
+        1 opens such links in the most recent window or tab,
+        2 opens such links in a new window,
+        3 opens such links in a new tab
+    browser.tabs.loadInBackground
+    - true if display should switch to a new tab which has been opened from a
+      link, false if display shouldn't switch
+    browser.tabs.warnOnClose
+    - true if when closing a window with multiple tabs the user is warned and
+      allowed to cancel the action, false to just close the window
+    browser.tabs.warnOnOpen
+    - true if the user should be warned if he attempts to open a lot of tabs at
+      once (e.g. a large folder of bookmarks), false otherwise
+    browser.taskbar.previews.enable
+    - true if tabs are to be shown in the Windows 7 taskbar
+    -->
+
+    <preference id="browser.link.open_newwindow"
+                name="browser.link.open_newwindow"
+                type="int"/>
+    <preference id="browser.tabs.loadInBackground"
+                name="browser.tabs.loadInBackground"
+                type="bool"
+                inverted="true"/>
+    <preference id="browser.tabs.warnOnClose"
+                name="browser.tabs.warnOnClose"
+                type="bool"/>
+    <preference id="browser.tabs.warnOnOpen"
+                name="browser.tabs.warnOnOpen"
+                type="bool"/>
+    <preference id="browser.sessionstore.restore_on_demand"
+                name="browser.sessionstore.restore_on_demand"
+                type="bool"/>
+#ifdef XP_WIN
+    <preference id="browser.taskbar.previews.enable"
+                name="browser.taskbar.previews.enable"
+                type="bool"/>
+#endif
+    <preference id="browser.ctrlTab.previews"
+                name="browser.ctrlTab.previews"
+                type="bool"/>
+
+  <preference id="browser.preferences.defaultPerformanceSettings.enabled"
+              name="browser.preferences.defaultPerformanceSettings.enabled"
+              type="bool"/>
+
+  <preference id="dom.ipc.processCount"
+              name="dom.ipc.processCount"
+              type="int"/>
+
+  <preference id="dom.ipc.processCount.web"
+              name="dom.ipc.processCount.web"
+              type="int"/>
+
+  <preference id="layers.acceleration.disabled"
+              name="layers.acceleration.disabled"
+              type="bool"
+              inverted="true"/>
+</preferences>
+
+<hbox id="header-general"
+      class="header"
+      hidden="true"
+      data-category="paneGeneral">
+  <label class="header-name" flex="1">&paneGeneral.title;</label>
+  <html:a class="help-button" target="_blank" aria-label="&helpButton.label;"></html:a>
+</hbox>
+
+<!-- Startup -->
+<groupbox id="startupGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <caption><label>&startup.label;</label></caption>
+
+#ifdef MOZ_DEV_EDITION
+  <vbox id="separateProfileBox">
+    <checkbox id="separateProfileMode"
+              label="&separateProfileMode.label;"/>
+    <hbox align="center" class="indent">
+      <label id="useFirefoxSync">&useFirefoxSync.label;</label>
+      <deck id="getStarted">
+        <label class="text-link">&getStarted.notloggedin.label;</label>
+        <label class="text-link">&getStarted.configured.label;</label>
+      </deck>
+    </hbox>
+  </vbox>
+#endif
+
+#ifdef E10S_TESTING_ONLY
+  <checkbox id="e10sAutoStart"
+            label="&e10sEnabled.label;"/>
+#endif
+
+#ifdef HAVE_SHELL_SERVICE
+  <vbox id="defaultBrowserBox">
+    <hbox align="center">
+      <checkbox id="alwaysCheckDefault" preference="browser.shell.checkDefaultBrowser"
+                label="&alwaysCheckDefault2.label;" accesskey="&alwaysCheckDefault2.accesskey;"/>
+    </hbox>
+    <deck id="setDefaultPane">
+      <hbox align="center" class="indent">
+        <label id="isNotDefaultLabel" flex="1">&isNotDefault.label;</label>
+        <button id="setDefaultButton"
+                label="&setAsMyDefaultBrowser2.label;" accesskey="&setAsMyDefaultBrowser2.accesskey;"
+                preference="pref.general.disable_button.default_browser"/>
+      </hbox>
+      <hbox align="center" class="indent">
+        <label id="isDefaultLabel" flex="1">&isDefault.label;</label>
+      </hbox>
+    </deck>
+    <separator class="thin"/>
+  </vbox>
+#endif
+
+  <html:table id="startupTable">
+    <html:tr>
+      <html:td class="label-cell">
+        <label accesskey="&startupPage.accesskey;"
+               control="browserStartupPage">&startupPage.label;</label>
+      </html:td>
+      <html:td class="content-cell">
+        <menulist id="browserStartupPage"
+                  class="content-cell-item"
+                  preference="browser.startup.page">
+          <menupopup>
+          <menuitem label="&startupUserHomePage.label;"
+                    value="1"
+                    id="browserStartupHomePage"/>
+          <menuitem label="&startupBlankPage.label;"
+                    value="0"
+                    id="browserStartupBlank"/>
+          <menuitem label="&startupPrevSession.label;"
+                    value="3"
+                    id="browserStartupLastSession"/>
+          </menupopup>
+        </menulist>
+      </html:td>
+    </html:tr>
+    <html:tr>
+      <html:td class="label-cell">
+        <label accesskey="&homepage.accesskey;"
+               control="browserHomePage">&homepage.label;</label>
+      </html:td>
+      <html:td class="content-cell">
+        <textbox id="browserHomePage"
+                 class="padded uri-element content-cell-item"
+                 type="autocomplete"
+                 autocompletesearch="unifiedcomplete"
+                 onsyncfrompreference="return gMainPane.syncFromHomePref();"
+                 onsynctopreference="return gMainPane.syncToHomePref(this.value);"
+                 placeholder="&abouthome.pageTitle;"
+                 preference="browser.startup.homepage"/>
+      </html:td>
+    </html:tr>
+    <html:tr>
+      <html:td class="label-cell" />
+      <html:td class="content-cell homepage-buttons">
+        <button id="useCurrent"
+                class="content-cell-item"
+                label=""
+                accesskey="&useCurrentPage.accesskey;"
+                label1="&useCurrentPage.label;"
+                label2="&useMultiple.label;"
+                preference="pref.browser.homepage.disable_button.current_page"/>
+        <button id="useBookmark"
+                class="content-cell-item"
+                label="&chooseBookmark.label;"
+                accesskey="&chooseBookmark.accesskey;"
+                preference="pref.browser.homepage.disable_button.bookmark_page"/>
+        <button id="restoreDefaultHomePage"
+                class="content-cell-item"
+                label="&restoreDefault.label;"
+                accesskey="&restoreDefault.accesskey;"
+                preference="pref.browser.homepage.disable_button.restore_default"/>
+      </html:td>
+    </html:tr>
+  </html:table>
+</groupbox>
+
+<!-- Locale -->
+<groupbox id="localeGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <caption><label>Locale Select</label></caption>
+  <menulist id="localeSelect">
+    <menupopup>
+      <menuitem value="ach" label="Acholi - Acholi"/>
+      <menuitem value="af" label="Afrikaans - Afrikaans"/>
+      <menuitem value="an" label="Aragonese - Aragonés"/>
+      <menuitem value="ar" label="Arabic - العربية"/>
+      <menuitem value="as" label="Assamese - অসমীয়া"/>
+      <menuitem value="ast" label="Asturian - Asturianu"/>
+      <menuitem value="bg" label="Bulgarian - Български"/>
+      <menuitem value="bn-BD" label="Bengali (Bangladesh) - বাংলা (বাংলাদেশ)"/>
+      <menuitem value="bn-IN" label="Bengali (India) - বাংলা (ভারত)"/>
+      <menuitem value="br" label="Breton - Brezhoneg"/>
+      <menuitem value="bs" label="Bosnian - Bosanski"/>
+      <menuitem value="ca" label="Catalan - Català"/>
+      <menuitem value="cak" label="Cakchiquel / Kaqchiquel"/>
+      <menuitem value="cs" label="Czech - Česky"/>
+      <menuitem value="cy" label="Welsh - Cymraeg"/>
+      <menuitem value="da" label="Danish - Dansk"/>
+      <menuitem value="de" label="German - Deutsch"/>
+      <menuitem value="el" label="Greek - Ελληνικά"/>
+      <menuitem value="en-GB" label="English (British) - English (British)"/>
+      <menuitem value="en-US" label="English (US) - English (US)"/>
+      <menuitem value="en-ZA" label="English (South African) - English (South African)"/>
+      <menuitem value="eo" label="Esperanto - Esperanto"/>
+      <menuitem value="es-AR" label="Spanish (Argentina) - Español (de Argentina)"/>
+      <menuitem value="es-CL" label="Spanish (Chile) - Español (de Chile)"/>
+      <menuitem value="es-ES" label="Spanish (Spain) - Español (de España)"/>
+      <menuitem value="es-MX" label="Spanish (Mexico) - Español (de México)"/>
+      <menuitem value="et" label="Estonian - Eesti"/>
+      <menuitem value="eu" label="Basque - Euskara"/>
+      <menuitem value="fa" label="Persian - فارسی"/>
+      <menuitem value="ff" label="Peul - Fulfulde"/>
+      <menuitem value="fi" label="Finnish - Suomi"/>
+      <menuitem value="fr" label="French - Français"/>
+      <menuitem value="fy-NL" label="West Frisian - Frysk"/>
+      <menuitem value="ga-IE" label="Irish - Gaeilge"/>
+      <menuitem value="gd" label="Scottish Gaelic - Gàidhlig"/>
+      <menuitem value="gl" label="Galician - Galego"/>
+      <menuitem value="gn" label="Guarani"/>
+      <menuitem value="gu-IN" label="Gujarati - ગુજરાતી"/>
+      <menuitem value="he" label="Hebrew - עברית"/>
+      <menuitem value="hi-IN" label="Hindi - हिन्दी"/>
+      <menuitem value="hr" label="Croatian - Hrvatski"/>
+      <menuitem value="hsb" label="Upper Sorbian - Hornjoserbsce"/>
+      <menuitem value="hu" label="Hungarian - Magyar"/>
+      <menuitem value="hy-AM" label="Armenian - Հայերեն"/>
+      <menuitem value="id" label="Indonesian - Bahasa Indonesia"/>
+      <menuitem value="is" label="Icelandic - Íslenska"/>
+      <menuitem value="it" label="Italian - Italiano"/>
+      <menuitem value="ja" label="Japanese - 日本語"/>
+      <menuitem value="ka" label="Georgian - ქართული"/>
+      <menuitem value="kab" label="Kabyle - Taqbaylit"/>
+      <menuitem value="kk" label="Kazakh - Қазақша"/>
+      <menuitem value="km" label="Cambodian - ភាសាខ្មែរ"/>
+      <menuitem value="kn" label="Kannada - ಕನ್ನಡ"/>
+      <menuitem value="ko" label="Korean - 한국어"/>
+      <menuitem value="lij" label="Ligurian - Líguru"/>
+      <menuitem value="lt" label="Lithuanian - Lietuvių"/>
+      <menuitem value="lv" label="Latvian - Latviešu"/>
+      <menuitem value="mai" label="Maithili - मैथिली মৈথিল"/>
+      <menuitem value="mk" label="Macedonian - Македонски"/>
+      <menuitem value="ml" label="Malayalam - മലയാളം"/>
+      <menuitem value="mr" label="Marathi - मराठी"/>
+      <menuitem value="ms" label="Malay - Bahasa Melayu"/>
+      <menuitem value="my" label="Burmese"/>
+      <menuitem value="nb-NO" label="Norwegian (Bokmål) - Norsk bokmål"/>
+      <menuitem value="nl" label="Dutch - Nederlands"/>
+      <menuitem value="nn-NO" label="Norwegian (Nynorsk) - Norsk nynorsk"/>
+      <menuitem value="or" label="Oriya - ଓଡ଼ିଆ"/>
+      <menuitem value="pa-IN" label="Punjabi - ਪੰਜਾਬੀ (ਭਾਰਤ)"/>
+      <menuitem value="pl" label="Polish - Polski"/>
+      <menuitem value="pt-BR" label="Portuguese (Brazilian) - Português (do Brasil)"/>
+      <menuitem value="pt-PT" label="Portuguese (Portugal) - Português (Europeu)"/>
+      <menuitem value="rm" label="Raeto Romance - Rumantsch"/>
+      <menuitem value="ro" label="Romanian - Română"/>
+      <menuitem value="ru" label="Russian - Русский"/>
+      <menuitem value="si" label="Sinhalese - සිංහල"/>
+      <menuitem value="sk" label="Slovak - Slovenčina"/>
+      <menuitem value="sl" label="Slovenian - Slovenščina"/>
+      <menuitem value="son" label="Songhai - Soŋay"/>
+      <menuitem value="sq" label="Albanian - Shqip"/>
+      <menuitem value="sr" label="Serbian - Српски"/>
+      <menuitem value="sv-SE" label="Swedish - Svenska"/>
+      <menuitem value="ta" label="Tamil - தமிழ்"/>
+      <menuitem value="te" label="Telugu - తెలుగు"/>
+      <menuitem value="th" label="Thai - ไทย"/>
+      <menuitem value="tr" label="Turkish - Türkçe"/>
+      <menuitem value="uk" label="Ukrainian - Українська"/>
+      <menuitem value="ur" label="Urdu - اُردو"/>
+      <menuitem value="uz" label="Uzbek - Oʻzbek tili"/>
+      <menuitem value="vi" label="Vietnamese - Tiếng Việt"/>
+      <menuitem value="xh" label="Xhosa - isiXhosa"/>
+      <menuitem value="zh-CN" label="Chinese (Simplified) - 中文 (简体)"/>
+      <menuitem value="zh-TW" label="Chinese (Traditional) - 正體中文 (繁體)"/>
+    </menupopup>
+  </menulist>
+</groupbox>
+
+<!-- Downloads -->
+<groupbox id="downloadsGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <caption><label>&downloads.label;</label></caption>
+
+  <radiogroup id="saveWhere"
+              preference="browser.download.useDownloadDir"
+              onsyncfrompreference="return gMainPane.readUseDownloadDir();">
+    <hbox id="saveToRow">
+      <radio id="saveTo"
+             value="true"
+             label="&saveTo.label;"
+             accesskey="&saveTo.accesskey;"
+             aria-labelledby="saveTo downloadFolder"/>
+      <filefield id="downloadFolder"
+                 flex="1"
+                 preference="browser.download.folderList"
+                 preference-editable="true"
+                 aria-labelledby="saveTo"
+                 onsyncfrompreference="return gMainPane.displayDownloadDirPref();"/>
+      <button id="chooseFolder"
+#ifdef XP_MACOSX
+              accesskey="&chooseFolderMac.accesskey;"
+              label="&chooseFolderMac.label;"
+#else
+              accesskey="&chooseFolderWin.accesskey;"
+              label="&chooseFolderWin.label;"
+#endif
+      />
+    </hbox>
+    <hbox>
+      <!-- Additional radio button added to support CloudStorage - Bug 1357171 -->
+      <radio id="saveToCloud"
+            value="true"
+            hidden="true"/>
+    </hbox>
+    <hbox>
+      <radio id="alwaysAsk"
+            value="false"
+            label="&alwaysAskWhere.label;"
+            accesskey="&alwaysAskWhere.accesskey;"/>
+    </hbox>
+  </radiogroup>
+</groupbox>
+
+<!-- Tab preferences -->
+<groupbox data-category="paneGeneral"
+          hidden="true" align="start">
+    <caption><label>&tabsGroup.label;</label></caption>
+
+    <checkbox id="ctrlTabRecentlyUsedOrder" label="&ctrlTabRecentlyUsedOrder.label;"
+              accesskey="&ctrlTabRecentlyUsedOrder.accesskey;"
+              preference="browser.ctrlTab.previews"/>
+
+    <checkbox id="linkTargeting" label="&newWindowsAsTabs.label;"
+              accesskey="&newWindowsAsTabs.accesskey;"
+              preference="browser.link.open_newwindow"
+              onsyncfrompreference="return gMainPane.readLinkTarget();"
+              onsynctopreference="return gMainPane.writeLinkTarget();"/>
+
+    <checkbox id="warnCloseMultiple" label="&warnOnCloseMultipleTabs.label;"
+              accesskey="&warnOnCloseMultipleTabs.accesskey;"
+              preference="browser.tabs.warnOnClose"/>
+
+    <checkbox id="warnOpenMany" label="&warnOnOpenManyTabs.label;"
+              accesskey="&warnOnOpenManyTabs.accesskey;"
+              preference="browser.tabs.warnOnOpen"/>
+
+    <checkbox id="switchToNewTabs" label="&switchLinksToNewTabs.label;"
+              accesskey="&switchLinksToNewTabs.accesskey;"
+              preference="browser.tabs.loadInBackground"/>
+
+#ifdef XP_WIN
+    <checkbox id="showTabsInTaskbar" label="&showTabsInTaskbar.label;"
+              accesskey="&showTabsInTaskbar.accesskey;"
+              preference="browser.taskbar.previews.enable"/>
+#endif
+</groupbox>
+
+<!-- Performance -->
+<groupbox id="performanceGroup" data-category="paneGeneral" hidden="true">
+  <caption><label>&performance.label;</label></caption>
+
+  <hbox align="center">
+    <checkbox id="useRecommendedPerformanceSettings"
+              label="&useRecommendedPerformanceSettings.label;"
+              accesskey="&useRecommendedPerformanceSettings.accesskey;"
+              preference="browser.preferences.defaultPerformanceSettings.enabled"/>
+    <label id="performanceSettingsLearnMore" class="learnMore text-link">&performanceSettingsLearnMore.label;</label>
+  </hbox>
+  <description class="indent">&useRecommendedPerformanceSettings.description;</description>
+
+  <vbox id="performanceSettings" class="indent" hidden="true">
+    <checkbox id="allowHWAccel"
+              label="&allowHWAccel.label;"
+              accesskey="&allowHWAccel.accesskey;"
+              preference="layers.acceleration.disabled"/>
+    <hbox align="center">
+      <label id="limitContentProcess" accesskey="&limitContentProcessOption.accesskey;" control="contentProcessCount">&limitContentProcessOption.label;</label>
+      <menulist id="contentProcessCount" preference="dom.ipc.processCount">
+        <menupopup>
+          <menuitem label="1" value="1"/>
+          <menuitem label="2" value="2"/>
+          <menuitem label="3" value="3"/>
+          <menuitem label="4" value="4"/>
+          <menuitem label="5" value="5"/>
+          <menuitem label="6" value="6"/>
+          <menuitem label="7" value="7"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+    <description id="contentProcessCountEnabledDescription">&limitContentProcessOption.description;</description>
+    <description id="contentProcessCountDisabledDescription">&limitContentProcessOption.disabledDescription;<label class="text-link" href="https://wiki.mozilla.org/Electrolysis">&limitContentProcessOption.disabledDescriptionLink;</label></description>
+  </vbox>
+</groupbox>

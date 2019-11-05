@@ -1,0 +1,18 @@
+{
+  "default": {
+    "visibleDefaultEngines": [
+      "bing", "ddg", "ecosia", "findx", "google", "qwant", "startpage", "yahoo", "wikipedia"
+    ]
+  },
+  "regionOverrides": {
+  },
+  "locales": {
+    "en-US": {
+      "default": {
+        "visibleDefaultEngines": [
+          "bing", "ddg", "ecosia", "findx", "google", "qwant", "startpage", "yahoo", "wikipedia"
+        ]
+      }
+    }
+  }
+}
