@@ -33,30 +33,71 @@ pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Windows NT 1
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.spotify.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.cosmicshambles.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.volunteerlogin.org", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.polar.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.eon.tv", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.slack.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.wire.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.trello.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0");
 #endif
 #ifdef XP_MACOSX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.spotify.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.cosmicshambles.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.volunteerlogin.org", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.polar.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.eon.tv", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.slack.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.wire.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.trello.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:68.0) Gecko/20100101 Firefox/68.0");
+
 #endif
 #ifdef XP_LINUX
 pref("general.useragent.override.addons.mozilla.org", "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0");
 pref("general.useragent.override.chase.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.netflix.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.web.whatsapp.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.spotify.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.de", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
 pref("general.useragent.override.amazon.co.jp", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.cosmicshambles.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.volunteerlogin.org", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.polar.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.eon.tv", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.slack.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.wire.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.trello.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.tresorit.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.discordapp.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.hoopladigital.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.ucf.org.au", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+pref("general.useragent.override.gizmodo.com", "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0");
+
 #endif
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
@@ -272,6 +313,9 @@ pref("dom.script_loader.bytecode_cache.strategy", 0);
 pref("browser.sessionhistory.max_total_viewers", -1);
 
 pref("ui.use_native_colors", true);
+#ifdef MOZ_WIDGET_GTK
+pref("ui.use_unity_menubar", true);
+#endif
 pref("ui.click_hold_context_menus", false);
 // Duration of timeout of incremental search in menus (ms).  0 means infinite.
 pref("ui.menu.incremental_search.timeout", 1000);
@@ -5581,7 +5625,7 @@ pref("media.gmp-manager.updateEnabled", true);
 //pref("media.gmp-manager.url.override", "");
 
 // Update service URL for GMP install/updates:
-pref("media.gmp-manager.url", "https://www.waterfox.net/update/GMP/%VERSION%/%CHANNEL%/%OS_VERSION%/update.xml");
+pref("media.gmp-manager.url", "");
 
 // When |media.gmp-manager.cert.requireBuiltIn| is true or not specified the
 // final certificate and all certificates the connection is redirected to before
@@ -5814,7 +5858,7 @@ pref("prompts.authentication_dialog_abuse_limit", 3);
 pref("dom.IntersectionObserver.enabled", true);
 
 // Whether module scripts (<script type="module">) are enabled for content.
-pref("dom.moduleScripts.enabled", false);
+pref("dom.moduleScripts.enabled", true);
 
 // Maximum amount of time in milliseconds consecutive setTimeout()/setInterval()
 // callback are allowed to run before yielding the event loop.
