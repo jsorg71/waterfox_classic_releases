@@ -188,7 +188,7 @@ XPCArrayHomogenizer::GetTypeForArray(JSContext* cx, HandleObject array,
         } else if (val.isString()) {
             type = tStr;
         } else {
-            MOZ_ASSERT(val.isObject(), "invalid type of jsval!");
+            MOZ_RELEASE_ASSERT(val.isObject(), "invalid type of jsval!");
             jsobj = &val.toObject();
 
             bool isArray;
@@ -304,7 +304,7 @@ bool XPCVariant::InitializeData(JSContext* cx)
     }
 
     // leaving only JSObject...
-    MOZ_ASSERT(val.isObject(), "invalid type of jsval!");
+    MOZ_RELEASE_ASSERT(val.isObject(), "invalid type of jsval!");
 
     RootedObject jsobj(cx, &val.toObject());
 
