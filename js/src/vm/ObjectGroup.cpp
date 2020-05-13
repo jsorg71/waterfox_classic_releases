@@ -20,11 +20,10 @@
 #include "vm/RegExpObject.h"
 #include "vm/Shape.h"
 #include "vm/TaggedProto.h"
-#include "vm/UnboxedObject.h"
 
 #include "jsobjinlines.h"
 
-#include "vm/UnboxedObject-inl.h"
+#include "vm/NativeObject-inl.h"
 
 using namespace js;
 
@@ -58,7 +57,6 @@ ObjectGroup::finalize(FreeOp* fop)
     if (newScriptDontCheckGeneration())
         newScriptDontCheckGeneration()->clear();
     fop->delete_(newScriptDontCheckGeneration());
-    fop->delete_(maybeUnboxedLayoutDontCheckGeneration());
     if (maybePreliminaryObjectsDontCheckGeneration())
         maybePreliminaryObjectsDontCheckGeneration()->clear();
     fop->delete_(maybePreliminaryObjectsDontCheckGeneration());
@@ -85,8 +83,6 @@ ObjectGroup::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
     size_t n = 0;
     if (TypeNewScript* newScript = newScriptDontCheckGeneration())
         n += newScript->sizeOfIncludingThis(mallocSizeOf);
-    if (UnboxedLayout* layout = maybeUnboxedLayoutDontCheckGeneration())
-        n += layout->sizeOfIncludingThis(mallocSizeOf);
     return n;
 }
 
@@ -320,7 +316,7 @@ JSObject::makeLazyGroup(JSContext* cx, HandleObject obj)
     if (obj->isIteratedSingleton())
         initialFlags |= OBJECT_FLAG_ITERATED;
 
-    if (obj->isIndexed())
+    if (obj->isNative() && obj->as<NativeObject>().isIndexed())
         initialFlags |= OBJECT_FLAG_SPARSE_INDEXES;
 
     if (obj->is<ArrayObject>() && obj->as<ArrayObject>().length() > INT32_MAX)
@@ -497,7 +493,7 @@ ObjectGroup::defaultNewGroup(JSContext* cx, const Class* clasp,
 
             // If we have previously cleared the 'new' script information for this
             // function, don't try to construct another one.
-            if (associated && associated->wasNewScriptCleared())
+            if (associated && associated->as<JSFunction>().wasNewScriptCleared())
                 associated = nullptr;
 
         } else {
@@ -547,8 +543,7 @@ ObjectGroup::defaultNewGroup(JSContext* cx, const Class* clasp,
     if (p) {
         ObjectGroup* group = p->group;
         MOZ_ASSERT_IF(clasp, group->clasp() == clasp);
-        MOZ_ASSERT_IF(!clasp, group->clasp() == &PlainObject::class_ ||
-                              group->clasp() == &UnboxedPlainObject::class_);
+        MOZ_ASSERT_IF(!clasp, group->clasp() == &PlainObject::class_);
         MOZ_ASSERT(group->proto() == proto);
         groups.defaultNewGroupCache.put(group, associated);
         return group;
@@ -793,7 +788,7 @@ GetValueTypeForTable(const Value& v)
     return type;
 }
 
-/* static */ JSObject*
+/* static */ ArrayObject*
 ObjectGroup::newArrayObject(JSContext* cx,
                             const Value* vp, size_t length,
                             NewObjectKind newKind, NewArrayKind arrayKind)
@@ -857,56 +852,13 @@ ObjectGroup::newArrayObject(JSContext* cx,
 
         AddTypePropertyId(cx, group, nullptr, JSID_VOID, elementType);
 
-        if (elementType != TypeSet::UnknownType()) {
-            // Keep track of the initial objects we create with this type.
-            // If the initial ones have a consistent shape and property types, we
-            // will try to use an unboxed layout for the group.
-            PreliminaryObjectArrayWithTemplate* preliminaryObjects =
-                cx->new_<PreliminaryObjectArrayWithTemplate>(nullptr);
-            if (!preliminaryObjects)
-                return nullptr;
-            group->setPreliminaryObjects(preliminaryObjects);
-        }
-
         if (!p.add(cx, *table, ObjectGroupCompartment::ArrayObjectKey(elementType), group))
             return nullptr;
     }
 
     // The type of the elements being added will already be reflected in type
-    // information, but make sure when creating an unboxed array that the
-    // common element type is suitable for the unboxed representation.
+    // information.
     ShouldUpdateTypes updateTypes = ShouldUpdateTypes::DontUpdate;
-    if (!MaybeAnalyzeBeforeCreatingLargeArray(cx, group, vp, length))
-        return nullptr;
-    if (group->maybePreliminaryObjects())
-        group->maybePreliminaryObjects()->maybeAnalyze(cx, group);
-    if (group->maybeUnboxedLayout()) {
-        switch (group->unboxedLayout().elementType()) {
-          case JSVAL_TYPE_BOOLEAN:
-            if (elementType != TypeSet::BooleanType())
-                updateTypes = ShouldUpdateTypes::Update;
-            break;
-          case JSVAL_TYPE_INT32:
-            if (elementType != TypeSet::Int32Type())
-                updateTypes = ShouldUpdateTypes::Update;
-            break;
-          case JSVAL_TYPE_DOUBLE:
-            if (elementType != TypeSet::Int32Type() && elementType != TypeSet::DoubleType())
-                updateTypes = ShouldUpdateTypes::Update;
-            break;
-          case JSVAL_TYPE_STRING:
-            if (elementType != TypeSet::StringType())
-                updateTypes = ShouldUpdateTypes::Update;
-            break;
-          case JSVAL_TYPE_OBJECT:
-            if (elementType != TypeSet::NullType() && !elementType.get().isObjectUnchecked())
-                updateTypes = ShouldUpdateTypes::Update;
-            break;
-          default:
-            MOZ_CRASH();
-        }
-    }
-
     return NewCopiedArrayTryUseGroup(cx, group, vp, length, newKind, updateTypes);
 }
 
@@ -916,49 +868,14 @@ GiveObjectGroup(JSContext* cx, JSObject* source, JSObject* target)
 {
     MOZ_ASSERT(source->group() != target->group());
 
-    if (!target->is<ArrayObject>() && !target->is<UnboxedArrayObject>())
+    if (!target->is<ArrayObject>() || !source->is<ArrayObject>())
         return true;
 
-    if (target->group()->maybePreliminaryObjects()) {
-        bool force = IsInsideNursery(source);
-        target->group()->maybePreliminaryObjects()->maybeAnalyze(cx, target->group(), force);
-    }
+    source->setGroup(target->group());
 
-    if (target->is<ArrayObject>()) {
-        ObjectGroup* sourceGroup = source->group();
-
-        if (source->is<UnboxedArrayObject>()) {
-            Shape* shape = target->as<ArrayObject>().lastProperty();
-            if (!UnboxedArrayObject::convertToNativeWithGroup(cx, source, target->group(), shape))
-                return false;
-        } else if (source->is<ArrayObject>()) {
-            source->setGroup(target->group());
-        } else {
-            return true;
-        }
-
-        if (sourceGroup->maybePreliminaryObjects())
-            sourceGroup->maybePreliminaryObjects()->unregisterObject(source);
-        if (target->group()->maybePreliminaryObjects())
-            target->group()->maybePreliminaryObjects()->registerNewObject(source);
-
-        for (size_t i = 0; i < source->as<ArrayObject>().getDenseInitializedLength(); i++) {
-            Value v = source->as<ArrayObject>().getDenseElement(i);
-            AddTypePropertyId(cx, source->group(), source, JSID_VOID, v);
-        }
-
-        return true;
-    }
-
-    if (target->is<UnboxedArrayObject>()) {
-        if (!source->is<UnboxedArrayObject>())
-            return true;
-        if (source->as<UnboxedArrayObject>().elementType() != JSVAL_TYPE_INT32)
-            return true;
-        if (target->as<UnboxedArrayObject>().elementType() != JSVAL_TYPE_DOUBLE)
-            return true;
-
-        return source->as<UnboxedArrayObject>().convertInt32ToDouble(cx, target->group());
+    for (size_t i = 0; i < source->as<ArrayObject>().getDenseInitializedLength(); i++) {
+        Value v = source->as<ArrayObject>().getDenseElement(i);
+        AddTypePropertyId(cx, source->group(), source, JSID_VOID, v);
     }
 
     return true;
@@ -1061,46 +978,6 @@ js::CombinePlainObjectPropertyTypes(JSContext* cx, JSObject* newObj,
                         Value otherValue = compare[i].toObject().as<PlainObject>().getSlot(slot);
                         if (otherValue.isObject() && !SameGroup(&otherValue.toObject(), newInnerObj)) {
                             if (!GiveObjectGroup(cx, &otherValue.toObject(), newInnerObj))
-                                return false;
-                        }
-                    }
-                }
-            }
-        }
-    } else if (newObj->is<UnboxedPlainObject>()) {
-        const UnboxedLayout& layout = newObj->as<UnboxedPlainObject>().layout();
-        const int32_t* traceList = layout.traceList();
-        if (!traceList)
-            return true;
-
-        uint8_t* newData = newObj->as<UnboxedPlainObject>().data();
-        uint8_t* oldData = oldObj->as<UnboxedPlainObject>().data();
-
-        for (; *traceList != -1; traceList++) {}
-        traceList++;
-        for (; *traceList != -1; traceList++) {
-            JSObject* newInnerObj = *reinterpret_cast<JSObject**>(newData + *traceList);
-            JSObject* oldInnerObj = *reinterpret_cast<JSObject**>(oldData + *traceList);
-
-            if (!newInnerObj || !oldInnerObj || SameGroup(oldInnerObj, newInnerObj))
-                continue;
-
-            if (!GiveObjectGroup(cx, newInnerObj, oldInnerObj))
-                return false;
-
-            if (SameGroup(oldInnerObj, newInnerObj))
-                continue;
-
-            if (!GiveObjectGroup(cx, oldInnerObj, newInnerObj))
-                return false;
-
-            if (SameGroup(oldInnerObj, newInnerObj)) {
-                for (size_t i = 1; i < ncompare; i++) {
-                    if (compare[i].isObject() && SameGroup(&compare[i].toObject(), newObj)) {
-                        uint8_t* otherData = compare[i].toObject().as<UnboxedPlainObject>().data();
-                        JSObject* otherInnerObj = *reinterpret_cast<JSObject**>(otherData + *traceList);
-                        if (otherInnerObj && !SameGroup(otherInnerObj, newInnerObj)) {
-                            if (!GiveObjectGroup(cx, otherInnerObj, newInnerObj))
                                 return false;
                         }
                     }
@@ -1330,12 +1207,6 @@ ObjectGroup::newPlainObject(JSContext* cx, IdValuePair* properties, size_t nprop
 
     RootedObjectGroup group(cx, p->value().group);
 
-    // Watch for existing groups which now use an unboxed layout.
-    if (group->maybeUnboxedLayout()) {
-        MOZ_ASSERT(group->unboxedLayout().properties().length() == nproperties);
-        return UnboxedPlainObject::createWithProperties(cx, group, newKind, properties);
-    }
-
     // Update property types according to the properties we are about to add.
     // Do this before we do anything which can GC, which might move or remove
     // this table entry.
@@ -1528,18 +1399,6 @@ ObjectGroup::allocationSiteGroup(JSContext* cx, JSScript* scriptArg, jsbytecode*
             else
                 cx->recoverFromOutOfMemory();
         }
-    }
-
-    if (kind == JSProto_Array &&
-        (JSOp(*pc) == JSOP_NEWARRAY || IsCallPC(pc)) &&
-        cx->options().unboxedArrays())
-    {
-        PreliminaryObjectArrayWithTemplate* preliminaryObjects =
-            cx->new_<PreliminaryObjectArrayWithTemplate>(nullptr);
-        if (preliminaryObjects)
-            res->setPreliminaryObjects(preliminaryObjects);
-        else
-            cx->recoverFromOutOfMemory();
     }
 
     if (!table->add(p, key, res)) {
@@ -1766,15 +1625,6 @@ ObjectGroupCompartment::getStringSplitStringGroup(JSContext* cx)
     group = makeGroup(cx, clasp, tagged, /* initialFlags = */ 0);
     if (!group)
         return nullptr;
-
-    if (cx->options().unboxedArrays()) {
-        PreliminaryObjectArrayWithTemplate* preliminaryObjects =
-            cx->new_<PreliminaryObjectArrayWithTemplate>(nullptr);
-        if (preliminaryObjects)
-            group->setPreliminaryObjects(preliminaryObjects);
-        else
-            cx->recoverFromOutOfMemory();
-    }
 
     groups.stringSplitStringGroup.set(group);
     return group;

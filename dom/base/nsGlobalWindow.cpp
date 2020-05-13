@@ -4041,13 +4041,6 @@ nsGlobalWindow::SetArguments(nsIArray *aArguments)
   MOZ_ASSERT(IsOuterWindow());
   nsresult rv;
 
-  // Historically, we've used the same machinery to handle openDialog arguments
-  // (exposed via window.arguments) and showModalDialog arguments (exposed via
-  // window.dialogArguments), even though the former is XUL-only and uses an XPCOM
-  // array while the latter is web-exposed and uses an arbitrary JS value.
-  // Moreover, per-spec |dialogArguments| is a property of the browsing context
-  // (outer), whereas |arguments| lives on the inner.
-  //
   // We've now mostly separated them, but the difference is still opaque to
   // nsWindowWatcher (the caller of SetArguments in this little back-and-forth
   // embedding waltz we do here).
@@ -13174,12 +13167,6 @@ nsGlobalWindow::RunTimeoutHandler(Timeout* aTimeout,
   // propagate the error to anyone who cares about it from this
   // point anyway, and the script context should have already reported
   // the script error in the usual way - so we just drop it.
-
-  // Since we might be processing more timeouts, go ahead and flush the promise
-  // queue now before we do that.  We need to do that while we're still in our
-  // "running JS is safe" state (e.g. mRunningTimeout is set, timeout->mRunning
-  // is false).
-  Promise::PerformMicroTaskCheckpoint();
 
   if (trackNestingLevel) {
     TimeoutManager::SetNestingLevel(nestingLevel);

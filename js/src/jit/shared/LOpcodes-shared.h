@@ -260,8 +260,6 @@
     _(GuardObjectGroup)             \
     _(GuardObjectIdentity)          \
     _(GuardClass)                   \
-    _(GuardUnboxedExpando)          \
-    _(LoadUnboxedExpando)           \
     _(TypeBarrierV)                 \
     _(TypeBarrierO)                 \
     _(MonitorTypes)                 \
@@ -271,10 +269,6 @@
     _(PostWriteElementBarrierV)     \
     _(InitializedLength)            \
     _(SetInitializedLength)         \
-    _(UnboxedArrayLength)           \
-    _(UnboxedArrayInitializedLength) \
-    _(IncrementUnboxedArrayInitializedLength) \
-    _(SetUnboxedArrayInitializedLength) \
     _(BoundsCheck)                  \
     _(BoundsCheckRange)             \
     _(BoundsCheckLower)             \
@@ -290,7 +284,6 @@
     _(StoreElementT)                \
     _(StoreUnboxedScalar)           \
     _(StoreUnboxedPointer)          \
-    _(ConvertUnboxedObjectToNative) \
     _(ArrayPopShiftV)               \
     _(ArrayPopShiftT)               \
     _(ArrayPushV)                   \

@@ -784,20 +784,6 @@ BaselineCacheIRCompiler::emitCallProxyHasOwnResult()
 }
 
 bool
-BaselineCacheIRCompiler::emitLoadUnboxedPropertyResult()
-{
-    AutoOutputRegister output(*this);
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    AutoScratchRegisterMaybeOutput scratch(allocator, masm, output);
-
-    JSValueType fieldType = reader.valueType();
-    Address fieldOffset(stubAddress(reader.stubOffset()));
-    masm.load32(fieldOffset, scratch);
-    masm.loadUnboxedProperty(BaseIndex(obj, scratch, TimesOne), fieldType, output);
-    return true;
-}
-
-bool
 BaselineCacheIRCompiler::emitGuardFrameHasNoArgumentsObject()
 {
     FailurePath* failure;
@@ -1194,44 +1180,6 @@ bool
 BaselineCacheIRCompiler::emitAllocateAndStoreDynamicSlot()
 {
     return emitAddAndStoreSlotShared(CacheOp::AllocateAndStoreDynamicSlot);
-}
-
-bool
-BaselineCacheIRCompiler::emitStoreUnboxedProperty()
-{
-    ObjOperandId objId = reader.objOperandId();
-    JSValueType fieldType = reader.valueType();
-    Address offsetAddr = stubAddress(reader.stubOffset());
-
-    // Allocate the fixed registers first. These need to be fixed for
-    // callTypeUpdateIC.
-    AutoScratchRegister scratch(allocator, masm, R1.scratchReg());
-    ValueOperand val = allocator.useFixedValueRegister(masm, reader.valOperandId(), R0);
-
-    Register obj = allocator.useRegister(masm, objId);
-
-    // We only need the type update IC if we are storing an object.
-    if (fieldType == JSVAL_TYPE_OBJECT) {
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(obj);
-        saveRegs.add(val);
-        if (!callTypeUpdateIC(obj, val, scratch, saveRegs))
-            return false;
-    }
-
-    masm.load32(offsetAddr, scratch);
-    BaseIndex fieldAddr(obj, scratch, TimesOne);
-
-    // Note that the storeUnboxedProperty call here is infallible, as the
-    // IR emitter is responsible for guarding on |val|'s type.
-    EmitICUnboxedPreBarrier(masm, fieldAddr, fieldType);
-    masm.storeUnboxedProperty(fieldAddr, fieldType,
-                              ConstantOrRegister(TypedOrValueRegister(val)),
-                              /* failure = */ nullptr);
-
-    if (UnboxedTypeNeedsPostBarrier(fieldType))
-        emitPostBarrierSlot(obj, val, scratch);
-    return true;
 }
 
 bool
@@ -1667,135 +1615,6 @@ BaselineCacheIRCompiler::emitStoreTypedElement()
     masm.jump(failure->label());
 
     masm.bind(&done);
-    return true;
-}
-
-bool
-BaselineCacheIRCompiler::emitStoreUnboxedArrayElement()
-{
-    ObjOperandId objId = reader.objOperandId();
-    Int32OperandId indexId = reader.int32OperandId();
-
-    // Allocate the fixed registers first. These need to be fixed for
-    // callTypeUpdateIC.
-    AutoScratchRegister scratch(allocator, masm, R1.scratchReg());
-    ValueOperand val = allocator.useFixedValueRegister(masm, reader.valOperandId(), R0);
-
-    JSValueType elementType = reader.valueType();
-    Register obj = allocator.useRegister(masm, objId);
-    Register index = allocator.useRegister(masm, indexId);
-
-    FailurePath* failure;
-    if (!addFailurePath(&failure))
-        return false;
-
-    // Bounds check.
-    Address initLength(obj, UnboxedArrayObject::offsetOfCapacityIndexAndInitializedLength());
-    masm.load32(initLength, scratch);
-    masm.and32(Imm32(UnboxedArrayObject::InitializedLengthMask), scratch);
-    masm.branch32(Assembler::BelowOrEqual, scratch, index, failure->label());
-
-    // Call the type update IC. After this everything must be infallible as we
-    // don't save all registers here.
-    if (elementType == JSVAL_TYPE_OBJECT) {
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(obj);
-        saveRegs.add(index);
-        saveRegs.add(val);
-        if (!callTypeUpdateIC(obj, val, scratch, saveRegs))
-            return false;
-    }
-
-    // Load obj->elements.
-    masm.loadPtr(Address(obj, UnboxedArrayObject::offsetOfElements()), scratch);
-
-    // Note that the storeUnboxedProperty call here is infallible, as the
-    // IR emitter is responsible for guarding on |val|'s type.
-    BaseIndex element(scratch, index, ScaleFromElemWidth(UnboxedTypeSize(elementType)));
-    EmitICUnboxedPreBarrier(masm, element, elementType);
-    masm.storeUnboxedProperty(element, elementType,
-                              ConstantOrRegister(TypedOrValueRegister(val)),
-                              /* failure = */ nullptr);
-
-    if (UnboxedTypeNeedsPostBarrier(elementType))
-        emitPostBarrierSlot(obj, val, scratch);
-    return true;
-}
-
-bool
-BaselineCacheIRCompiler::emitStoreUnboxedArrayElementHole()
-{
-    ObjOperandId objId = reader.objOperandId();
-    Int32OperandId indexId = reader.int32OperandId();
-
-    // Allocate the fixed registers first. These need to be fixed for
-    // callTypeUpdateIC.
-    AutoScratchRegister scratch(allocator, masm, R1.scratchReg());
-    ValueOperand val = allocator.useFixedValueRegister(masm, reader.valOperandId(), R0);
-
-    JSValueType elementType = reader.valueType();
-    Register obj = allocator.useRegister(masm, objId);
-    Register index = allocator.useRegister(masm, indexId);
-
-    FailurePath* failure;
-    if (!addFailurePath(&failure))
-        return false;
-
-    // Check index <= initLength.
-    Address initLength(obj, UnboxedArrayObject::offsetOfCapacityIndexAndInitializedLength());
-    masm.load32(initLength, scratch);
-    masm.and32(Imm32(UnboxedArrayObject::InitializedLengthMask), scratch);
-    masm.branch32(Assembler::Below, scratch, index, failure->label());
-
-    // Check capacity.
-    masm.checkUnboxedArrayCapacity(obj, RegisterOrInt32Constant(index), scratch, failure->label());
-
-    // Call the type update IC. After this everything must be infallible as we
-    // don't save all registers here.
-    if (elementType == JSVAL_TYPE_OBJECT) {
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(obj);
-        saveRegs.add(index);
-        saveRegs.add(val);
-        if (!callTypeUpdateIC(obj, val, scratch, saveRegs))
-            return false;
-    }
-
-    // Load obj->elements.
-    masm.loadPtr(Address(obj, UnboxedArrayObject::offsetOfElements()), scratch);
-
-    // If index == initLength, increment initialized length.
-    Label inBounds, doStore;
-    masm.load32(initLength, scratch);
-    masm.and32(Imm32(UnboxedArrayObject::InitializedLengthMask), scratch);
-    masm.branch32(Assembler::NotEqual, scratch, index, &inBounds);
-
-    masm.add32(Imm32(1), initLength);
-
-    // If length is now <= index, increment length.
-    Address length(obj, UnboxedArrayObject::offsetOfLength());
-    Label skipIncrementLength;
-    masm.branch32(Assembler::Above, length, index, &skipIncrementLength);
-    masm.add32(Imm32(1), length);
-    masm.bind(&skipIncrementLength);
-
-    // Skip EmitICUnboxedPreBarrier as the memory is uninitialized.
-    masm.jump(&doStore);
-
-    masm.bind(&inBounds);
-
-    BaseIndex element(scratch, index, ScaleFromElemWidth(UnboxedTypeSize(elementType)));
-    EmitICUnboxedPreBarrier(masm, element, elementType);
-
-    // Note that the storeUnboxedProperty call here is infallible, as the
-    // IR emitter is responsible for guarding on |val|'s type.
-    masm.bind(&doStore);
-    masm.storeUnboxedProperty(element, elementType,
-                              ConstantOrRegister(TypedOrValueRegister(val)),
-                              /* failure = */ nullptr);
-
-    if (UnboxedTypeNeedsPostBarrier(elementType))
-        emitPostBarrierSlot(obj, val, scratch);
     return true;
 }
 

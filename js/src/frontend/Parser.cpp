@@ -368,7 +368,7 @@ bool
 ParseContext::init()
 {
     if (scriptId_ == UINT32_MAX) {
-        tokenStream_.reportErrorNoOffset(JSMSG_NEED_DIET, js_script_str);
+        errorReporter_.reportErrorNoOffset(JSMSG_NEED_DIET, js_script_str);
         return false;
     }
 
@@ -1010,7 +1010,7 @@ Parser<ParseHandler, CharT>::parse()
     Directives directives(options().strictOption);
     GlobalSharedContext globalsc(context, ScopeKind::Global,
                                  directives, options().extraWarningsOption);
-    ParseContext globalpc(this, &globalsc, /* newDirectives = */ nullptr);
+    SourceParseContext globalpc(this, &globalsc, /* newDirectives = */ nullptr);
     if (!globalpc.init())
         return null();
 
@@ -2151,7 +2151,7 @@ template <>
 ParseNode*
 Parser<FullParseHandler, char16_t>::evalBody(EvalSharedContext* evalsc)
 {
-    ParseContext evalpc(this, evalsc, /* newDirectives = */ nullptr);
+    SourceParseContext evalpc(this, evalsc, /* newDirectives = */ nullptr);
     if (!evalpc.init())
         return nullptr;
 
@@ -2234,7 +2234,7 @@ template <>
 ParseNode*
 Parser<FullParseHandler, char16_t>::globalBody(GlobalSharedContext* globalsc)
 {
-    ParseContext globalpc(this, globalsc, /* newDirectives = */ nullptr);
+    SourceParseContext globalpc(this, globalsc, /* newDirectives = */ nullptr);
     if (!globalpc.init())
         return nullptr;
 
@@ -2272,7 +2272,7 @@ Parser<FullParseHandler, char16_t>::moduleBody(ModuleSharedContext* modulesc)
 {
     MOZ_ASSERT(checkOptionsCalled);
 
-    ParseContext modulepc(this, modulesc, nullptr);
+    SourceParseContext modulepc(this, modulesc, nullptr);
     if (!modulepc.init())
         return null();
 
@@ -2614,7 +2614,7 @@ Parser<FullParseHandler, char16_t>::standaloneFunction(HandleFunction fun,
         return null();
     funbox->initStandaloneFunction(enclosingScope);
 
-    ParseContext funpc(this, funbox, newDirectives);
+    SourceParseContext funpc(this, funbox, newDirectives);
     if (!funpc.init())
         return null();
     funpc.setIsStandaloneFunctionBody();
@@ -3591,11 +3591,11 @@ Parser<ParseHandler, CharT>::innerFunction(Node pn, ParseContext* outerpc, Funct
 {
     // Note that it is possible for outerpc != this->pc, as we may be
     // attempting to syntax parse an inner function from an outer full
-    // parser. In that case, outerpc is a ParseContext from the full parser
+    // parser. In that case, outerpc is a SourceParseContext from the full parser
     // instead of the current top of the stack of the syntax parser.
 
     // Push a new ParseContext.
-    ParseContext funpc(this, funbox, newDirectives);
+    SourceParseContext funpc(this, funbox, newDirectives);
     if (!funpc.init())
         return false;
 
@@ -3619,7 +3619,7 @@ Parser<ParseHandler, CharT>::innerFunction(Node pn, ParseContext* outerpc, Handl
 {
     // Note that it is possible for outerpc != this->pc, as we may be
     // attempting to syntax parse an inner function from an outer full
-    // parser. In that case, outerpc is a ParseContext from the full parser
+    // parser. In that case, outerpc is a SourceParseContext from the full parser
     // instead of the current top of the stack of the syntax parser.
 
     FunctionBox* funbox = newFunctionBox(pn, fun, toStringStart, inheritedDirectives,
@@ -3682,7 +3682,7 @@ Parser<FullParseHandler, char16_t>::standaloneLazyFunction(HandleFunction fun,
     funbox->initFromLazyFunction();
 
     Directives newDirectives = directives;
-    ParseContext funpc(this, funbox, &newDirectives);
+    SourceParseContext funpc(this, funbox, &newDirectives);
     if (!funpc.init())
         return null();
 
@@ -3911,12 +3911,6 @@ Parser<ParseHandler, CharT>::functionStmt(uint32_t toStringStart, YieldHandling 
 
     GeneratorKind generatorKind = NotGenerator;
     if (tt == TOK_MUL) {
-        if (!asyncIterationSupported()) {
-            if (asyncKind != SyncFunction) {
-                error(JSMSG_ASYNC_GENERATOR);
-                return null();
-            }
-        }
         generatorKind = StarGenerator;
         if (!tokenStream.getToken(&tt))
             return null();
@@ -3986,12 +3980,6 @@ Parser<ParseHandler, CharT>::functionExpr(uint32_t toStringStart, InvokedPredict
         return null();
 
     if (tt == TOK_MUL) {
-        if (!asyncIterationSupported()) {
-            if (asyncKind != SyncFunction) {
-                error(JSMSG_ASYNC_GENERATOR);
-                return null();
-            }
-        }
         generatorKind = StarGenerator;
         if (!tokenStream.getToken(&tt))
             return null();
@@ -5183,7 +5171,7 @@ Parser<FullParseHandler, char16_t>::namedImportsOrNamespaceImport(TokenKind tt, 
         // Namespace imports are are not indirect bindings but lexical
         // definitions that hold a module namespace object. They are treated
         // as const variables which are initialized during the
-        // ModuleDeclarationInstantiation step.
+        // ModuleInstantiate step.
         RootedPropertyName bindingName(context, importedBinding());
         if (!bindingName)
             return false;
@@ -6288,16 +6276,14 @@ Parser<ParseHandler, CharT>::forStatement(YieldHandling yieldHandling)
         }
     }
 
-    if (asyncIterationSupported()) {
-        if (pc->isAsync()) {
-            bool matched;
-            if (!tokenStream.matchToken(&matched, TOK_AWAIT))
-                return null();
+    if (pc->isAsync()) {
+        bool matched;
+        if (!tokenStream.matchToken(&matched, TOK_AWAIT))
+            return null();
 
-            if (matched) {
-                iflags |= JSITER_FORAWAITOF;
-                iterKind = IteratorKind::Async;
-            }
+        if (matched) {
+            iflags |= JSITER_FORAWAITOF;
+            iterKind = IteratorKind::Async;
         }
     }
 
@@ -7046,58 +7032,68 @@ Parser<ParseHandler, CharT>::tryStatement(YieldHandling yieldHandling)
 
             /*
              * Legal catch forms are:
-             *   catch (lhs)
-             *   catch (lhs if <boolean_expression>)
+             *   catch (lhs) {
+             *   catch (lhs if <boolean_expression>) {
+             *   catch {
              * where lhs is a name or a destructuring left-hand side.
-             * (the latter is legal only #ifdef JS_HAS_CATCH_GUARD)
+             * The second is legal only #ifdef JS_HAS_CATCH_GUARD.
              */
-            MUST_MATCH_TOKEN(TOK_LP, JSMSG_PAREN_BEFORE_CATCH);
-
-            if (!tokenStream.getToken(&tt))
+            bool omittedBinding;
+            if (!tokenStream.matchToken(&omittedBinding, TOK_LC))
                 return null();
-            Node catchName;
-            switch (tt) {
-              case TOK_LB:
-              case TOK_LC:
-                catchName = destructuringDeclaration(DeclarationKind::CatchParameter,
-                                                     yieldHandling, tt);
-                if (!catchName)
-                    return null();
-                break;
 
-              default: {
-                if (!TokenKindIsPossibleIdentifierName(tt)) {
-                    error(JSMSG_CATCH_IDENTIFIER);
+            Node catchName;
+            Node catchGuard = null();
+
+            if (omittedBinding) {
+                catchName = null();
+            } else {
+                MUST_MATCH_TOKEN(TOK_LP, JSMSG_PAREN_BEFORE_CATCH);
+
+                if (!tokenStream.getToken(&tt))
                     return null();
+                switch (tt) {
+                  case TOK_LB:
+                  case TOK_LC:
+                    catchName = destructuringDeclaration(DeclarationKind::CatchParameter,
+                                                         yieldHandling, tt);
+                    if (!catchName)
+                        return null();
+                    break;
+
+                  default: {
+                    if (!TokenKindIsPossibleIdentifierName(tt)) {
+                        error(JSMSG_CATCH_IDENTIFIER);
+                        return null();
+                    }
+
+                    catchName = bindingIdentifier(DeclarationKind::SimpleCatchParameter,
+                                                  yieldHandling);
+                    if (!catchName)
+                        return null();
+                    break;
+                  }
                 }
 
-                catchName = bindingIdentifier(DeclarationKind::SimpleCatchParameter,
-                                              yieldHandling);
-                if (!catchName)
-                    return null();
-                break;
-              }
-            }
-
-            Node catchGuard = null();
 #if JS_HAS_CATCH_GUARD
-            /*
-             * We use 'catch (x if x === 5)' (not 'catch (x : x === 5)')
-             * to avoid conflicting with the JS2/ECMAv4 type annotation
-             * catchguard syntax.
-             */
-            bool matched;
-            if (!tokenStream.matchToken(&matched, TOK_IF))
-                return null();
-            if (matched) {
-                catchGuard = expr(InAllowed, yieldHandling, TripledotProhibited);
-                if (!catchGuard)
+                /*
+                 * We use 'catch (x if x === 5)' (not 'catch (x : x === 5)')
+                 * to avoid conflicting with the JS2/ECMAv4 type annotation
+                 * catchguard syntax.
+                 */
+                bool matched;
+                if (!tokenStream.matchToken(&matched, TOK_IF))
                     return null();
-            }
+                if (matched) {
+                    catchGuard = expr(InAllowed, yieldHandling, TripledotProhibited);
+                    if (!catchGuard)
+                        return null();
+                }
 #endif
-            MUST_MATCH_TOKEN(TOK_RP, JSMSG_PAREN_AFTER_CATCH);
+                MUST_MATCH_TOKEN(TOK_RP, JSMSG_PAREN_AFTER_CATCH);
 
-            MUST_MATCH_TOKEN(TOK_LC, JSMSG_CURLY_BEFORE_CATCH);
+                MUST_MATCH_TOKEN(TOK_LC, JSMSG_CURLY_BEFORE_CATCH);
+            }
 
             Node catchBody = catchBlockStatement(yieldHandling, scope);
             if (!catchBody)
@@ -8689,7 +8685,7 @@ Parser<ParseHandler, CharT>::generatorComprehensionLambda(unsigned begin)
     genFunbox->isGenexpLambda = true;
     genFunbox->initWithEnclosingParseContext(outerpc, Expression);
 
-    ParseContext genpc(this, genFunbox, /* newDirectives = */ nullptr);
+    SourceParseContext genpc(this, genFunbox, /* newDirectives = */ nullptr);
     if (!genpc.init())
         return null();
     genpc.functionScope().useAsVarScope(&genpc);
@@ -9713,12 +9709,6 @@ Parser<ParseHandler, CharT>::propertyName(YieldHandling yieldHandling,
     }
 
     if (ltok == TOK_MUL) {
-        if (!asyncIterationSupported()) {
-            if (isAsync) {
-                error(JSMSG_ASYNC_GENERATOR);
-                return null();
-            }
-        }
         isGenerator = true;
         if (!tokenStream.getToken(&ltok))
             return null();
